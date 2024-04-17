@@ -21,7 +21,18 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-
+module "label_private_subnet" {
+  source     = "cloudposse/label/null"
+  version    = "0.25.0"
+  context    = module.base_label.context
+  name       = "private_subnet"
+}
+module "label_public_subnet" {
+  source     = "cloudposse/label/null"
+  version    = "0.25.0"
+  context    = module.base_label.context
+  name       = "public_subnet"
+}
 
 # Include the subnets/cidr module to calculate CIDR blocks for the subnets
 module "subnets" {
@@ -43,13 +54,21 @@ module "subnets" {
 # Create an internet gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  tags = module.label_vpc.tags
+  tags = merge(
+    module.label_vpc.tags,
+    {
+        Name = "${module.label_vpc.tags["Name"]}-internet-gateway"
+    })
 }
 
 # Create a route table for the public subnet
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-  tags = module.label_vpc.tags
+  tags = merge(
+   module.label_vpc.tags,
+   {
+        Name = "${module.label_vpc.tags["Name"]}-public-route"
+    })
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -63,7 +82,7 @@ resource "aws_subnet" "public" {
   cidr_block = module.subnets.network_cidr_blocks.public  # First subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
-  tags = module.label_vpc.tags
+  tags = module.label_public_subnet.tags
 
   lifecycle {
     create_before_destroy = true
@@ -75,7 +94,7 @@ resource "aws_subnet" "private" {
   vpc_id = aws_vpc.main.id
   cidr_block = module.subnets.network_cidr_blocks.private  # Second subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
-  tags = module.label_vpc.tags
+  tags = module.label_private_subnet.tags
 
   lifecycle {
     create_before_destroy = true
