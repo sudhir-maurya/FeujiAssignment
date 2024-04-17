@@ -21,11 +21,23 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+
+
 # Include the subnets/cidr module to calculate CIDR blocks for the subnets
 module "subnets" {
   source = "hashicorp/subnets/cidr"
   version = "1.0.0"
   base_cidr_block = var.vpc_cidr
+  networks = [
+        {
+            name = "public"
+            new_bits = 24 - tonumber(split("/", var.vpc_cidr)[1])
+        },
+        {
+            name = "private"
+            new_bits = 24 - tonumber(split("/", var.vpc_cidr)[1])
+        }
+    ]
 }
 
 # Create an internet gateway
@@ -48,7 +60,7 @@ resource "aws_route_table" "public" {
 # Create the public subnet
 resource "aws_subnet" "public" {
   vpc_id = aws_vpc.main.id
-  cidr_block = module.subnets.results[0]  # First subnet CIDR
+  cidr_block = cidr_block = module.subnets.network_cidr_blocks.public  # First subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
   tags = module.label_vpc.tags
@@ -61,7 +73,7 @@ resource "aws_subnet" "public" {
 # Create the private subnet
 resource "aws_subnet" "private" {
   vpc_id = aws_vpc.main.id
-  cidr_block = module.subnets.results[1]  # Second subnet CIDR
+  cidr_block = cidr_block = module.subnets.network_cidr_blocks.private  # Second subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
   tags = module.label_vpc.tags
 
