@@ -60,7 +60,7 @@ resource "aws_route_table" "public" {
 # Create the public subnet
 resource "aws_subnet" "public" {
   vpc_id = aws_vpc.main.id
-  cidr_block = cidr_block = module.subnets.network_cidr_blocks.public  # First subnet CIDR
+  cidr_block = module.subnets.network_cidr_blocks.public  # First subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
   tags = module.label_vpc.tags
@@ -73,7 +73,7 @@ resource "aws_subnet" "public" {
 # Create the private subnet
 resource "aws_subnet" "private" {
   vpc_id = aws_vpc.main.id
-  cidr_block = cidr_block = module.subnets.network_cidr_blocks.private  # Second subnet CIDR
+  cidr_block = module.subnets.network_cidr_blocks.private  # Second subnet CIDR
   availability_zone = data.aws_availability_zones.available.names[0]
   tags = module.label_vpc.tags
 
