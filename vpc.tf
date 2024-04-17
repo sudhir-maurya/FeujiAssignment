@@ -25,9 +25,7 @@ data "aws_availability_zones" "available" {
 module "subnets" {
   source = "hashicorp/subnets/cidr"
   version = "1.0.0"
-  vpc_cidr_block = var.vpc_cidr
-  netmask = 24
-  count = 2
+  base_cidr_block = var.vpc_cidr
 }
 
 # Create an internet gateway
